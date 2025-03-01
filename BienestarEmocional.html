@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Detector de Emociones</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image"></script>
+</head>
+<body>
+    <h2>Detector de Emociones</h2>
+    <video id="webcam" width="300" height="300" autoplay></video>
+    <button onclick="predictEmotion()">Detectar Emoción</button>
+    <p id="result">Emoción: </p>
+    
+    <script>
+        const URL = "TU_URL_DEL_MODELO/"; // Reemplaza con la URL de tu modelo
+        let model, webcam;
+
+        async function loadModel() {
+            model = await tmImage.load(URL + "model.json", URL + "metadata.json");
+            navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
+                document.getElementById("webcam").srcObject = stream;
+            });
+        }
+
+        async function predictEmotion() {
+            const capture = document.createElement("canvas");
+            capture.width = 300;
+            capture.height = 300;
+            const ctx = capture.getContext("2d");
+            ctx.drawImage(document.getElementById("webcam"), 0, 0, 300, 300);
+            
+            const prediction = await model.predict(capture);
+            let maxProb = 0, emotion = "";
+            prediction.forEach((p) => {
+                if (p.probability > maxProb) {
+                    maxProb = p.probability;
+                    emotion = p.className;
+                }
+            });
+            document.getElementById("result").innerText = "Emoción: " + emotion;
+            sendToAppInventor(emotion);
+        }
+        
+        function sendToAppInventor(emotion) {
+            window.AppInventor.setWebViewString(emotion);
+        }
+        
+        loadModel();
+    </script>
+</body>
+</html>
